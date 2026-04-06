@@ -41,11 +41,11 @@ class MinimalStepInput(Node):
 
         # --- Subscribers ---
         self.local_pos = VehicleLocalPosition()
-        self.create_subscription(VehicleLocalPosition, '/fmu/out/vehicle_local_position', self.position_callback, qos_profile)
+        self.create_subscription(VehicleLocalPosition, '/fmu/out/vehicle_local_position', self.attitude_sub_callback, qos_profile)
         
 
-        self.thrust_sp = VehicleThrustSetpoint()
-        self.create_subscription(VehicleThrustSetpoint, '/fmu/out/vehicle_thrust_setpoint', self.thrust_callback, qos_profile)
+        self.thrustattitude_sub = VehicleAttitudeSetpoint()
+        self.create_subscription(VehicleAttitudeSetpoint, '/fmu/out/vehicle_attitude_setpoint', self.thrust_callback, qos_profile)
 
         self.vehicle_status = VehicleStatus()
         self.create_subscription(VehicleStatus, '/fmu/out/vehicle_status', self.status_callback, qos_profile)
@@ -69,8 +69,8 @@ class MinimalStepInput(Node):
     def position_callback(self, msg):
         self.local_pos = msg
 
-    def thrust_callback(self, msg):
-        self.thrust_sp = msg
+    def attitude_sub_callback(self, msg):
+        self.attitude_sub = msg
 
     def status_callback(self, msg):
         self.vehicle_status = msg
@@ -164,7 +164,8 @@ class MinimalStepInput(Node):
             self.publish_position_setpoint(0.0, 0.0, -2.0, 0.0)
 
             if time.time() - self.start_time > 10.0:
-                self.hover_record.append(self.thrust_sp.xyz[2])
+                self.hover_record.append(self.attitude_sub.thrust_body[2])
+                print(self.attitude_sub.thrust_body)
                 if time.time() - self.start_time > 20.0:
                     self.start_time = time.time()
                     self.stage = 1.5
