@@ -43,7 +43,7 @@ class MinimalStepInput(Node):
         self.create_subscription(VehicleLocalPosition, '/fmu/out/vehicle_local_position', self.position_callback, qos_profile)
         
 
-        self.thrustattitude_sub = VehicleAttitudeSetpoint()
+        self.attitude_sub = VehicleAttitudeSetpoint()
         self.create_subscription(VehicleAttitudeSetpoint, '/fmu/out/vehicle_attitude_setpoint', self.attitude_sub_callback, qos_profile)
 
         self.vehicle_status = VehicleStatus()
