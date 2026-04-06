@@ -15,7 +15,6 @@ from px4_msgs.msg import (
     VehicleCommand,
     VehicleAttitudeSetpoint,
     VehicleLocalPosition,
-    VehicleThrustSetpoint,
     VehicleStatus,
     VehicleCommandAck
 )
@@ -41,11 +40,11 @@ class MinimalStepInput(Node):
 
         # --- Subscribers ---
         self.local_pos = VehicleLocalPosition()
-        self.create_subscription(VehicleLocalPosition, '/fmu/out/vehicle_local_position', self.attitude_sub_callback, qos_profile)
+        self.create_subscription(VehicleLocalPosition, '/fmu/out/vehicle_local_position', self.position_callback, qos_profile)
         
 
         self.thrustattitude_sub = VehicleAttitudeSetpoint()
-        self.create_subscription(VehicleAttitudeSetpoint, '/fmu/out/vehicle_attitude_setpoint', self.thrust_callback, qos_profile)
+        self.create_subscription(VehicleAttitudeSetpoint, '/fmu/out/vehicle_attitude_setpoint', self.attitude_sub_callback, qos_profile)
 
         self.vehicle_status = VehicleStatus()
         self.create_subscription(VehicleStatus, '/fmu/out/vehicle_status', self.status_callback, qos_profile)
