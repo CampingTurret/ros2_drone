@@ -16,7 +16,8 @@ from px4_msgs.msg import (
     VehicleAttitudeSetpoint,
     VehicleLocalPosition,
     VehicleStatus,
-    VehicleCommandAck
+    VehicleCommandAck,
+    ActuatorMotors
 )
 
 class MinimalStepInput(Node):
@@ -43,8 +44,8 @@ class MinimalStepInput(Node):
         self.create_subscription(VehicleLocalPosition, '/fmu/out/vehicle_local_position', self.position_callback, qos_profile)
         
 
-        self.attitude_sub = VehicleAttitudeSetpoint()
-        self.create_subscription(VehicleAttitudeSetpoint, '/fmu/out/vehicle_attitude_setpoint', self.attitude_sub_callback, qos_profile)
+        self.motors_sub = ActuatorMotors()
+        self.create_subscription(ActuatorMotors, '/fmu/out/actuator_motors', self.motors_callback, qos_profile)
 
         self.vehicle_status = VehicleStatus()
         self.create_subscription(VehicleStatus, '/fmu/out/vehicle_status', self.status_callback, qos_profile)
@@ -68,8 +69,8 @@ class MinimalStepInput(Node):
     def position_callback(self, msg):
         self.local_pos = msg
 
-    def attitude_sub_callback(self, msg):
-        self.attitude_sub = msg
+    def motors_callback(self, msg):
+        self.motors_sub = msg
 
     def status_callback(self, msg):
         self.vehicle_status = msg
@@ -163,8 +164,8 @@ class MinimalStepInput(Node):
             self.publish_position_setpoint(0.0, 0.0, -2.0, 0.0)
 
             if time.time() - self.start_time > 10.0:
-                self.hover_record.append(self.attitude_sub.thrust_body[2])
-                print(self.attitude_sub.thrust_body)
+                self.hover_record.append(sum(self.motors_sub.control)/4)
+                print(self.motors_sub.control)
                 if time.time() - self.start_time > 20.0:
                     self.start_time = time.time()
                     self.stage = 1.5
@@ -182,6 +183,7 @@ class MinimalStepInput(Node):
         # --- Stage 2: apply step input ---
         elif self.stage == 2:
             roll_step = np.deg2rad(10)
+            print(self.motors_sub.control)
             self.send_attitude_setpoint(roll_step, 0.0, 0.0, self.hover_thrust)
 
             if time.time() - self.start_time > 3.0:
