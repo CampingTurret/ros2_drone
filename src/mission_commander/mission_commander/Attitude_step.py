@@ -216,7 +216,7 @@ class MinimalStepInput(Node):
             self.send_heartbeat(False, True)
 
         if self.stage == 0:
-            self.publish_position_setpoint(0.0, 0.0, -2.0, 0.0)
+            self.publish_position_setpoint(0.0, 0.0, -5.0, 0.0)
 
             if time.time() - self.start_time > 0.5:
                 # Switch to OFFBOARD
@@ -232,14 +232,14 @@ class MinimalStepInput(Node):
 
         elif self.stage == 1:
             self.hover_thrust = 0.8
-            self.publish_position_setpoint(0.0, 0.0, -2.0, 0.0)
+            self.publish_position_setpoint(0.0, 0.0, -5.0, 0.0)
             if time.time() - self.start_time > 20.0:
                 self.start_time = time.time()
                 self.stage = 1.5
 
 
         elif self.stage == 1.5:
-            self.publish_position_setpoint(0.0, 0.0, -2.0, 0.0)
+            self.publish_position_setpoint(0.0, 0.0, -5.0, 0.0)
             self.send_attitude_setpoint(0.0, 0.0, 0.0, self.hover_thrust)
             if time.time() - self.start_time > 10.0:
                 self.start_time = time.time()
