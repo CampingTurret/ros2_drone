@@ -7,4 +7,5 @@ sudo docker run -it --rm \
   --privileged \
   --device /dev/gpiomem4 \
   --device /dev/mem \
+  -v $(pwd)/logs:/root/logs \
   elijahanghw/ros_imav:latest

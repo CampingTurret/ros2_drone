@@ -8,6 +8,7 @@ from std_msgs.msg import Bool
 from px4_msgs.msg import OffboardControlMode, TrajectorySetpoint, VehicleCommand, VehicleLocalPosition, VehicleStatus, VehicleAttitude
 from px4_msgs.msg import VehicleAttitudeSetpoint
 import csv 
+import datetime
 
 import time
 
@@ -79,7 +80,8 @@ class MinimalStepInput(Node):
 
         # --- Logger ---
         rint = np.random.randint(0, 100)
-        self.logfile = open(f"model_log_{rint}.csv", "w", newline="")
+        ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.logfile = open(f"/root/logs/log_{ts}.csv", "w", newline="")
         self.logger = csv.writer(self.logfile)
 
         self.logger.writerow([
@@ -229,7 +231,7 @@ class MinimalStepInput(Node):
                     self.stage = 1
 
         elif self.stage == 1:
-
+            self.hover_thrust = 0.8
             self.publish_position_setpoint(0.0, 0.0, -2.0, 0.0)
             if time.time() - self.start_time > 20.0:
                 self.start_time = time.time()
@@ -238,10 +240,9 @@ class MinimalStepInput(Node):
 
         elif self.stage == 1.5:
             self.publish_position_setpoint(0.0, 0.0, -2.0, 0.0)
-            self.send_attitude_setpoint(0.0, 0.0, 0.0, 0.0)
+            self.send_attitude_setpoint(0.0, 0.0, 0.0, self.hover_thrust)
             if time.time() - self.start_time > 10.0:
                 self.start_time = time.time()
-                self.hover_thrust = 0.5
                 self.stage = 2
 
         # --- Stage 2: apply step input ---
