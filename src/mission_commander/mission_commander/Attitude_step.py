@@ -7,6 +7,7 @@ import numpy as np
 from std_msgs.msg import Bool
 from px4_msgs.msg import OffboardControlMode, TrajectorySetpoint, VehicleCommand, VehicleLocalPosition, VehicleStatus, VehicleAttitude
 from px4_msgs.msg import VehicleAttitudeSetpoint
+import csv 
 
 import time
 
@@ -54,7 +55,42 @@ class MinimalStepInput(Node):
                         '/fmu/out/vehicle_command_ack',
                         lambda msg: print("ACK:", msg.command, msg.result),
                         qos_profile)
+        
 
+        # --- Ground truth holders ---
+
+
+        self.att_gt = VehicleAttitude()
+        self.pos_gt = VehicleLocalPosition()
+
+        self.create_subscription(
+            VehicleAttitude,
+            '/fmu/out/vehicle_attitude_groundtruth',
+            self.att_gt_callback,
+            qos_profile
+        )
+
+        self.create_subscription(
+            VehicleLocalPosition,
+            '/fmu/out/vehicle_local_position_groundtruth',
+            self.pos_gt_callback,
+            qos_profile
+        )
+
+        # --- Logger ---
+        rint = np.random.randint(0, 100)
+        self.logfile = open(f"model_log_{rint}.csv", "w", newline="")
+        self.logger = csv.writer(self.logfile)
+
+        self.logger.writerow([
+            "t",
+            "roll_cmd", "pitch_cmd", "yaw_rate_cmd", "thrust_cmd",
+            "roll_gt", "pitch_gt", "yaw_gt",
+            "x_gt", "y_gt", "z_gt",
+            "vx_gt", "vy_gt", "vz_gt",
+            "ax_gt", "ay_gt", "az_gt",
+            "stage"
+        ])
 
 
         # --- State ---
@@ -66,6 +102,13 @@ class MinimalStepInput(Node):
         self.timer = self.create_timer(0.03, self.loop)
 
 
+        self.last_roll_cmd = np.nan
+        self.last_pitch_cmd = np.nan
+        self.last_yaw_rate_cmd = np.nan
+        self.last_thrust_cmd = np.nan
+
+
+
     def position_callback(self, msg):
         self.local_pos = msg
 
@@ -74,6 +117,27 @@ class MinimalStepInput(Node):
 
     def status_callback(self, msg):
         self.vehicle_status = msg
+
+    def att_gt_callback(self, msg):
+        self.att_gt = msg
+
+    def pos_gt_callback(self, msg):
+        self.pos_gt = msg
+
+    def quat_to_euler(self, q):
+        w, x, y, z = q
+        sinr = 2.0 * (w*x + y*z)
+        cosr = 1.0 - 2.0 * (x*x + y*y)
+        roll = np.arctan2(sinr, cosr)
+
+        sinp = 2.0 * (w*y - z*x)
+        pitch = np.arcsin(np.clip(sinp, -1.0, 1.0))
+
+        siny = 2.0 * (w*z + x*y)
+        cosy = 1.0 - 2.0 * (y*y + z*z)
+        yaw = np.arctan2(siny, cosy)
+
+        return roll, pitch, yaw
 
     # ------------------------------------------------------------
     # Helper: send attitude + thrust setpoint
@@ -90,6 +154,11 @@ class MinimalStepInput(Node):
 
         # Thrust in body NED frame (down is positive)
         msg.thrust_body = [0.0, 0.0, -float(thrust)]
+
+        self.last_roll_cmd = roll
+        self.last_pitch_cmd = pitch
+        self.last_yaw_rate_cmd = yaw_rate
+        self.last_thrust_cmd = thrust
 
         self.attitude_pub.publish(msg)
 
@@ -162,13 +231,9 @@ class MinimalStepInput(Node):
         elif self.stage == 1:
 
             self.publish_position_setpoint(0.0, 0.0, -2.0, 0.0)
-
-            if time.time() - self.start_time > 10.0:
-                self.hover_record.append(sum(self.motors_sub.control)/4)
-                print(self.motors_sub.control)
-                if time.time() - self.start_time > 20.0:
-                    self.start_time = time.time()
-                    self.stage = 1.5
+            if time.time() - self.start_time > 20.0:
+                self.start_time = time.time()
+                self.stage = 1.5
 
 
         elif self.stage == 1.5:
@@ -176,9 +241,8 @@ class MinimalStepInput(Node):
             self.send_attitude_setpoint(0.0, 0.0, 0.0, 0.0)
             if time.time() - self.start_time > 10.0:
                 self.start_time = time.time()
-                self.hover_thrust = abs(sum(self.hover_record)/len(self.hover_record))
+                self.hover_thrust = 0.5
                 self.stage = 2
-                print("hover_thrust:", self.hover_thrust)
 
         # --- Stage 2: apply step input ---
         elif self.stage == 2:
@@ -198,6 +262,42 @@ class MinimalStepInput(Node):
         # --- Stage 4: done ---
         elif self.stage == 4:
             pass
+
+
+        t = time.time() - self.start_time
+
+        # Commands
+        roll_cmd = self.last_roll_cmd
+        pitch_cmd = self.last_pitch_cmd
+        yaw_rate_cmd = self.last_yaw_rate_cmd
+        thrust_cmd = self.last_thrust_cmd
+
+        # Ground truth attitude
+        roll_gt, pitch_gt, yaw_gt = self.quat_to_euler(self.att_gt.q)
+
+        # Ground truth position/velocity/acc
+        x_gt = self.pos_gt.x
+        y_gt = self.pos_gt.y
+        z_gt = self.pos_gt.z
+
+        vx_gt = self.pos_gt.vx
+        vy_gt = self.pos_gt.vy
+        vz_gt = self.pos_gt.vz
+
+        ax_gt = self.pos_gt.ax
+        ay_gt = self.pos_gt.ay
+        az_gt = self.pos_gt.az
+
+        self.logger.writerow([
+            t,
+            roll_cmd, pitch_cmd, yaw_rate_cmd, thrust_cmd,
+            roll_gt, pitch_gt, yaw_gt,
+            x_gt, y_gt, z_gt,
+            vx_gt, vy_gt, vz_gt,
+            ax_gt, ay_gt, az_gt,
+            self.stage
+        ])
+
 
 
 
