@@ -66,14 +66,14 @@ class MinimalStepInput(Node):
 
         self.create_subscription(
             VehicleAttitude,
-            '/fmu/out/vehicle_attitude_groundtruth',
+            '/fmu/out/vehicle_attitude',
             self.att_gt_callback,
             qos_profile
         )
 
         self.create_subscription(
             VehicleLocalPosition,
-            '/fmu/out/vehicle_local_position_groundtruth',
+            '/fmu/out/vehicle_local_position',
             self.pos_gt_callback,
             qos_profile
         )
