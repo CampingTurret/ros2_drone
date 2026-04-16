@@ -9,6 +9,8 @@ from px4_msgs.msg import OffboardControlMode, TrajectorySetpoint, VehicleCommand
 from px4_msgs.msg import VehicleAttitudeSetpoint
 import csv 
 import datetime
+import os
+import glob
 
 import time
 
@@ -23,7 +25,7 @@ from px4_msgs.msg import (
 )
 
 class MinimalStepInput(Node):
-    def __init__(self):
+    def __init__(self, run_name = "Default", step_amplitude=10.0, step_axis='roll', hover_thrust=0.8):
         super().__init__('minimal_step_input')
 
         qos_profile = QoSProfile(
@@ -33,6 +35,10 @@ class MinimalStepInput(Node):
             depth=1,
         )
 
+        self.run_name = run_name
+        self.step_amplitude = step_amplitude
+        self.step_axis = step_axis
+        self.hover_thrust = hover_thrust
         # --- Publishers ---
         self.offboard_pub = self.create_publisher(OffboardControlMode, '/fmu/in/offboard_control_mode', qos_profile)
 
@@ -80,8 +86,15 @@ class MinimalStepInput(Node):
 
         # --- Logger ---
         rint = np.random.randint(0, 100)
-        ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.logfile = open(f"/root/logs/log_{ts}.csv", "w", newline="")
+
+        log_dir = "/root/logs"
+
+        # Remove only CSV files
+        for f in glob.glob(os.path.join(log_dir, "*.csv")):
+            os.remove(f)
+
+        # Now create your new log file
+        self.logfile = open(f"{log_dir}/{run_name}.csv", "w", newline="")
         self.logger = csv.writer(self.logfile)
 
         self.logger.writerow([
@@ -231,7 +244,6 @@ class MinimalStepInput(Node):
                     self.stage = 1
 
         elif self.stage == 1:
-            self.hover_thrust = 0.8
             self.publish_position_setpoint(0.0, 0.0, -5.0, 0.0)
             if time.time() - self.start_time > 20.0:
                 self.start_time = time.time()
@@ -249,7 +261,12 @@ class MinimalStepInput(Node):
         elif self.stage == 2:
             roll_step = np.deg2rad(10)
             print(self.motors_sub.control)
-            self.send_attitude_setpoint(roll_step, 0.0, 0.0, self.hover_thrust)
+            if self.step_axis == "roll":
+                self.send_attitude_setpoint(np.deg2rad(self.step_amplitude), 0.0, 0.0, self.hover_thrust)
+            elif self.step_axis == "pitch":
+                self.send_attitude_setpoint(0.0, np.deg2rad(self.step_amplitude), 0.0, self.hover_thrust)
+            elif self.step_axis == "yaw_rate":
+                self.send_attitude_setpoint(0.0, 0.0, np.deg2rad(self.step_amplitude), self.hover_thrust)
 
             if time.time() - self.start_time > 3.0:
                 self.stage = 3
@@ -303,11 +320,37 @@ class MinimalStepInput(Node):
 
 
 def main(args=None):
+    import sys
+
+    # Default values
+    step_amplitude = 0.0
+    step_axis = "roll"
+    hover_thrust = 0.8
+    filename = "default_run"
+
+    # Parse arguments
+    if len(sys.argv) > 1:
+        step_amplitude = float(sys.argv[1])
+    if len(sys.argv) > 2:
+        step_axis = sys.argv[2]
+    if len(sys.argv) > 3:
+        hover_thrust = float(sys.argv[3])
+    if len(sys.argv) > 4:
+        filename = sys.argv[4]
+
+    print("=== Experiment Parameters ===")
+    print("Step amplitude:", step_amplitude)
+    print("Step axis:", step_axis)
+    print("Hover thrust:", hover_thrust)
+    print("Filename:", filename)
+
     rclpy.init(args=args)
-    node = MinimalStepInput()
+    node = MinimalStepInput(run_name=filename, step_amplitude=step_amplitude, step_axis=step_axis, hover_thrust=hover_thrust)
+
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()
+
 
 
 if __name__ == '__main__':
