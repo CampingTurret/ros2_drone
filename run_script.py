@@ -84,7 +84,7 @@ def start_commander(axis, amplitude, hover_thrust, filename):
         raise RuntimeError("Commander container did not start")
 
     # 4. Build the ros2 command
-    ros2_cmd = ["sudo","docker", "exec", "-it", container_id,
+    ros2_cmd = ["sudo","docker", "exec", container_id,
                 "ros2", "run", "mission_commander", "attitude_step", str(axis), str(amplitude), str(hover_thrust), str(filename)]
 
     # 5. Run the ROS2 command inside the container WITH terminal output
