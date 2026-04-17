@@ -12,9 +12,7 @@ def start_px4():
     print("make px4_sitl gz_x500")
     p = subprocess.Popen(
         ["make", "px4_sitl", "gz_x500"],
-        cwd=PATH_PX4,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL
+        cwd=PATH_PX4
     )
     time.sleep(2)
     return p
@@ -24,9 +22,7 @@ def start_uxrcedss():
     print("MicroXRCEAgent udp4 -p 8888")
     p = subprocess.Popen(
         ["MicroXRCEAgent", "udp4", "-p", "8888"],
-        cwd=PATH_microxrcedds,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL
+        cwd=PATH_microxrcedds
     )
     time.sleep(2)
     return p
