@@ -110,6 +110,7 @@ def clear_runs(folder):
 def one_run(axis, amplitude, file_name):
 
     #Preperation
+    ensure_sudo()
     repo_pull()
     build_docker()
     
@@ -141,7 +142,12 @@ def test_sweep(search_runs:int, search_axis:str, max_amplitude: float, min_ampli
             one_run(axis, i, f"{axis}_{int(i*100)}_run")
         compile_runs(axis)
 
+def ensure_sudo():
+    print("Requesting sudo password...")
+    subprocess.run(["sudo", "-v"])  # triggers password prompt early
+
 
 if __name__ == "__main__":
     print("Starting")
+    ensure_sudo()
     one_run("roll", 0.17, "test")
