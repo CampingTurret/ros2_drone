@@ -4,8 +4,8 @@ import numpy as np
 import time
 import threading
 
-PATH_microxrcedds = Path(__file__).parents[1]
-PATH_PX4 = Path(__file__).parents[1]
+PATH_microxrcedds = Path(__file__).parents[1] / "Micro-XRCE-DDS-Agent"
+PATH_PX4 = Path(__file__).parents[1] / "PX4-Autopilot"
 PATH_Commander = Path(__file__).parent
 
 def start_px4():
@@ -14,9 +14,8 @@ def start_px4():
     p = subprocess.Popen(
         ["make", "px4_sitl", "gz_x500"],
         cwd=PATH_PX4,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL
     )
 
     threading.Thread(target=lambda: print(p.stdout.read()), daemon=True).start()
@@ -29,7 +28,9 @@ def start_uxrcedss():
     print("MicroXRCEAgent udp4 -p 8888")
     p = subprocess.Popen(
         ["MicroXRCEAgent", "udp4", "-p", "8888"],
-        cwd=PATH_microxrcedds
+        cwd=PATH_microxrcedds,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
     time.sleep(2)
     return p
