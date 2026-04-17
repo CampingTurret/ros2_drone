@@ -66,7 +66,8 @@ def start_commander_container():
         "--device", "/dev/gpiomem4",
         "--device", "/dev/mem",
         "-v", f"{PATH_Commander}/logs:/root/logs",
-        "elijahanghw/ros_imav:latest"
+        "elijahanghw/ros_imav:latest",
+        "sleep", "infinity"
     ]
 
     # Start container
