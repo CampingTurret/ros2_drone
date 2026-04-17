@@ -2,6 +2,7 @@ import subprocess
 from pathlib import Path
 import numpy as np
 import time
+import threading
 
 PATH_microxrcedds = Path(__file__).parents[1]
 PATH_PX4 = Path(__file__).parents[1]
@@ -12,8 +13,14 @@ def start_px4():
     print("make px4_sitl gz_x500")
     p = subprocess.Popen(
         ["make", "px4_sitl", "gz_x500"],
-        cwd=PATH_PX4
+        cwd=PATH_PX4,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True
     )
+
+    threading.Thread(target=lambda: print(p.stdout.read()), daemon=True).start()
+
     time.sleep(2)
     return p
 
