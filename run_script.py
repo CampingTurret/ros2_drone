@@ -85,10 +85,15 @@ def start_commander_container():
 def start_commander(axis, amplitude, hover_thrust, filename):
     container_id = start_commander_container()
 
+    cmd_str = (
+    f"ros2 run mission_commander attitude_step "
+    f"{axis} {amplitude} {hover_thrust} {filename}"
+    )
+    
     ros2_cmd = [
         "sudo", "docker", "exec", "-it", container_id,
         "bash", "-i", "-c",
-        "ros2", "run", "mission_commander", "attitude_step",
+        "ros2", cmd_str,
         str(axis), str(amplitude), str(hover_thrust), str(filename)
     ]
 
