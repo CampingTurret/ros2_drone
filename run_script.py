@@ -61,7 +61,7 @@ def start_commander_container():
     subprocess.run(["sudo", "docker", "rm", "-f", "ros_imav_container"])
 
     cmd = [
-        "sudo", "docker", "run", "-d",
+        "sudo", "docker", "run", "-dit",
         "--name", "ros_imav_container",
         "--network=host",
         "--privileged",
