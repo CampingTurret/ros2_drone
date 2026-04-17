@@ -58,6 +58,8 @@ def build_docker():
 
 def start_commander_container():
     # Build docker run command
+    subprocess.run(["sudo", "docker", "rm", "-f", "ros_imav_container"])
+
     cmd = [
         "sudo", "docker", "run", "-d",
         "--name", "ros_imav_container",
