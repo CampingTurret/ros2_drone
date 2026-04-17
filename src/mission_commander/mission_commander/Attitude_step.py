@@ -330,9 +330,9 @@ def main(args=None):
 
     # Parse arguments
     if len(sys.argv) > 1:
-        step_amplitude = float(sys.argv[1])
+        step_axis = sys.argv[1]
     if len(sys.argv) > 2:
-        step_axis = sys.argv[2]
+        step_amplitude = float(sys.argv[2])
     if len(sys.argv) > 3:
         hover_thrust = float(sys.argv[3])
     if len(sys.argv) > 4:
