@@ -279,6 +279,7 @@ class MinimalStepInput(Node):
 
         # --- Stage 4: done ---
         elif self.stage == 4:
+            rclpy.shutdown()
             pass
 
 
