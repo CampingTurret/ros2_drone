@@ -2,7 +2,6 @@ import subprocess
 from pathlib import Path
 import numpy as np
 import time
-import threading
 
 PATH_microxrcedds = Path(__file__).parents[1] / "Micro-XRCE-DDS-Agent"
 PATH_PX4 = Path(__file__).parents[1] / "PX4-Autopilot"
@@ -17,9 +16,6 @@ def start_px4():
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL
     )
-
-    threading.Thread(target=lambda: print(p.stdout.read()), daemon=True).start()
-
     time.sleep(2)
     return p
 
