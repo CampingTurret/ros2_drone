@@ -56,42 +56,40 @@ def build_docker():
     time.sleep(1)
 
 
-import subprocess
-import time
-import os
+def start_commander_container():
+    # Build docker run command
+    cmd = [
+        "sudo", "docker", "run", "-d",
+        "--name", "ros_imav_container",
+        "--network=host",
+        "--privileged",
+        "--device", "/dev/gpiomem4",
+        "--device", "/dev/mem",
+        "-v", f"{PATH_Commander}/logs:/root/logs",
+        "elijahanghw/ros_imav:latest"
+    ]
 
-def start_commander(axis, amplitude, hover_thrust, filename):
-    # 1. Start the docker_run.sh script (silent)
-    subprocess.Popen(
-        ["sudo","./docker_run.sh"],
-        cwd=PATH_Commander,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL
-    )
-
-    # 2. Wait for container to start
-    time.sleep(2)
-
-    # 3. Find the container ID of the ros_imav container
-    result = subprocess.run(
-        ["sudo","docker", "ps", "-q", "--filter", "ancestor=elijahanghw/ros_imav:latest"],
-        capture_output=True,
-        text=True
-    )
+    # Start container
+    result = subprocess.run(cmd, capture_output=True, text=True)
     container_id = result.stdout.strip()
+    time.sleep(1)
 
     if not container_id:
-        raise RuntimeError("Commander container did not start")
+        raise RuntimeError("Failed to start ros_imav_container")
 
-    # 4. Build the ros2 command
-    ros2_cmd = ["sudo","docker", "exec", container_id,
-                "ros2", "run", "mission_commander", "attitude_step", str(axis), str(amplitude), str(hover_thrust), str(filename)]
+    return container_id
 
-    # 5. Run the ROS2 command inside the container WITH terminal output
-    return subprocess.Popen(
-        ros2_cmd,
-        cwd=PATH_Commander
-    )
+
+def start_commander(axis, amplitude, hover_thrust, filename):
+    container_id = start_commander_container()
+
+    ros2_cmd = [
+        "sudo", "docker", "exec", container_id,
+        "ros2", "run", "mission_commander", "attitude_step",
+        str(axis), str(amplitude), str(hover_thrust), str(filename)
+    ]
+
+    return subprocess.Popen(ros2_cmd), container_id
 
 
 def export_run():
