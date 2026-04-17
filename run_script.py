@@ -92,9 +92,7 @@ def start_commander(axis, amplitude, hover_thrust, filename):
     
     ros2_cmd = [
         "sudo", "docker", "exec", "-it", container_id,
-        "bash", "-i", "-c",
-        "ros2", cmd_str,
-        str(axis), str(amplitude), str(hover_thrust), str(filename)
+        "bash", "-i", "-c", cmd_str
     ]
 
     return subprocess.Popen(ros2_cmd), container_id
