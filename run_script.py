@@ -48,7 +48,7 @@ def build_docker():
     print("./docker/dockerize_amd64.sh")
     subprocess.run(
         ["./docker/dockerize_amd64.sh"],
-        cwd=PATH_PX4,
+        cwd=PATH_Commander,
         check=True,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL
@@ -136,3 +136,6 @@ def test_sweep(search_runs:int, search_axis:str, max_amplitude: float, min_ampli
         compile_runs(axis)
 
 
+if __name__ == "__main__":
+    print("Starting")
+    one_run("roll", 0.17, "test")
