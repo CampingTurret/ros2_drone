@@ -259,7 +259,6 @@ class MinimalStepInput(Node):
 
         # --- Stage 2: apply step input ---
         elif self.stage == 2:
-            roll_step = np.deg2rad(10)
             print(self.motors_sub.control)
             if self.step_axis == "roll":
                 self.send_attitude_setpoint(np.deg2rad(self.step_amplitude), 0.0, 0.0, self.hover_thrust)
@@ -273,12 +272,14 @@ class MinimalStepInput(Node):
 
         # --- Stage 3: land ---
         elif self.stage == 3:
+            print("Land command")
             self.command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1.0, 4.0)  # AUTO
             self.command(VehicleCommand.VEHICLE_CMD_NAV_LAND)
             self.stage = 4
 
         # --- Stage 4: done ---
         elif self.stage == 4:
+            print("Node shutdown")
             rclpy.shutdown()
             pass
 
