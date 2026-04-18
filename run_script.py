@@ -2,6 +2,10 @@ import subprocess
 from pathlib import Path
 import numpy as np
 import time
+import json
+import shutil
+import pandas as pd
+import json
 
 PATH_microxrcedds = Path(__file__).parents[1] / "Micro-XRCE-DDS-Agent"
 PATH_PX4 = Path(__file__).parents[1] / "PX4-Autopilot"
@@ -97,15 +101,88 @@ def start_commander(axis, amplitude, hover_thrust, filename):
 
     return subprocess.Popen(ros2_cmd), container_id
 
+import shutil
+import json
+from datetime import datetime
 
-def export_run():
-    pass
+def export_run(axis: str, filename: str, amplitude: float, hover_thrust: float):
+    src = PATH_Commander / "logs" / f"{filename}.csv"
+    dst_dir = PATH_Commander / "exports" / axis
+    dst_dir.mkdir(parents=True, exist_ok=True)
 
-def compile_runs(folder):
-    pass
+    dst_csv = dst_dir / f"{filename}.csv"
+    shutil.copy(src, dst_csv)
 
-def clear_runs(folder):
-    pass
+    meta = {
+        "axis": axis,
+        "amplitude": amplitude,
+        "hover_thrust": hover_thrust,
+        "filename": filename,
+        "timestamp": datetime.now().isoformat()
+    }
+
+    with open(dst_dir / f"{filename}.json", "w") as f:
+        json.dump(meta, f, indent=4)
+
+    print(f"Exported run {dst_csv}")
+
+def compile_runs(axis: str):
+    export_path = PATH_Commander / "exports" / axis
+    compiled_path = PATH_Commander / "compiled"
+    compiled_path.mkdir(parents=True, exist_ok=True)
+
+    compiled = {}
+
+    for csv_file in sorted(export_path.glob("*.csv")):
+        run_name = csv_file.stem
+
+        # Load metadata
+        meta_file = export_path / f"{run_name}.json"
+        if not meta_file.exists():
+            print(f"Missing metadata for {run_name}")
+            continue
+
+        with open(meta_file) as f:
+            meta = json.load(f)
+
+        # Load CSV
+        df = pd.read_csv(csv_file)
+
+        if "stage" not in df.columns:
+            print(f"Warning: no 'stage' column in {csv_file.name}")
+            continue
+
+        # Filter to stage == 2
+        df2 = df[df["stage"] == 2].copy()
+
+        # Build JSON‑friendly structure
+        compiled[run_name] = {
+            "axis": meta["axis"],
+            "amplitude": meta["amplitude"],
+            "hover_thrust": meta["hover_thrust"],
+            "timestamp": meta["timestamp"],
+            "columns": list(df2.columns),
+            "data": df2.values.tolist()
+        }
+
+        print(f"Added run {run_name} with {len(df2)} stage‑2 samples")
+
+    # Save JSON
+    out_file = compiled_path / f"{axis}_compiled.json"
+    with open(out_file, "w") as f:
+        json.dump(compiled, f, indent=4)
+
+    print(f"Saved compiled JSON → {out_file}")
+
+    return compiled
+
+def clear_runs(axis: str):
+    export_path = PATH_Commander / "exports" / axis
+    if export_path.exists():
+        shutil.rmtree(export_path)
+    export_path.mkdir(parents=True, exist_ok=True)
+    print(f"Cleared exported runs for axis {axis}")
+
 
 def one_run(axis, amplitude, file_name):
 
@@ -118,19 +195,23 @@ def one_run(axis, amplitude, file_name):
     processes = {}
     processes["uxrce"] = start_uxrcedss()
     processes["px4"] = start_px4()
-    processes["commander"] = start_commander(axis, amplitude, 0.7, file_name)
+    processes["commander"], _ = start_commander(axis, amplitude, 0.7, file_name)
 
 
     #Wait
     time.sleep(120)
 
     #End processes
+    processes["px4"].kill()
+    processes["uxrce"].kill()
+    processes["commander"].kill()
+    subprocess.run(["sudo", "docker", "stop", "ros_imav_container"])
 
 
     #Recover data
-    export_run()
+    export_run(axis, file_name, amplitude, 0.7)
 
-def test_sweep(search_runs:int, search_axis:str, max_amplitude: float, min_amplitude :float|None = None):
+def test_sweep(search_runs:int, search_axis:list[str], max_amplitude: float, min_amplitude :float|None = None):
     if min_amplitude is None:
         if max_amplitude > 0:
             min_amplitude = - max_amplitude
@@ -150,4 +231,5 @@ def ensure_sudo():
 if __name__ == "__main__":
     print("Starting")
     ensure_sudo()
-    one_run("roll", 0.17, "test")
+    one_run("roll", 10, "test")
+    compile_runs("roll")
