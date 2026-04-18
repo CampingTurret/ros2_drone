@@ -245,7 +245,7 @@ class MinimalStepInput(Node):
 
         elif self.stage == 1:
             self.publish_position_setpoint(0.0, 0.0, -5.0, 0.0)
-            if time.time() - self.start_time > 20.0:
+            if time.time() - self.start_time > 10.0:
                 self.start_time = time.time()
                 self.stage = 1.5
 
@@ -259,7 +259,6 @@ class MinimalStepInput(Node):
 
         # --- Stage 2: apply step input ---
         elif self.stage == 2:
-            print(self.motors_sub.control)
             if self.step_axis == "roll":
                 self.send_attitude_setpoint(np.deg2rad(self.step_amplitude), 0.0, 0.0, self.hover_thrust)
             elif self.step_axis == "pitch":
@@ -267,7 +266,8 @@ class MinimalStepInput(Node):
             elif self.step_axis == "yaw_rate":
                 self.send_attitude_setpoint(0.0, 0.0, np.deg2rad(self.step_amplitude), self.hover_thrust)
 
-            if time.time() - self.start_time > 3.0:
+            if time.time() - self.start_time > 10.0:
+                self.start_time = time.time()
                 self.stage = 3
 
         # --- Stage 3: land ---
@@ -275,7 +275,8 @@ class MinimalStepInput(Node):
             print("Land command")
             self.command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1.0, 4.0)  # AUTO
             self.command(VehicleCommand.VEHICLE_CMD_NAV_LAND)
-            self.stage = 4
+            if time.time() - self.start_time > 10.0:
+                self.stage = 4
 
         # --- Stage 4: done ---
         elif self.stage == 4:
