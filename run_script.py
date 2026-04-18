@@ -195,7 +195,7 @@ def one_run(axis, amplitude, file_name):
     processes = {}
     processes["uxrce"] = start_uxrcedss()
     processes["px4"] = start_px4()
-    processes["commander"], _ = start_commander(axis, amplitude, 0.7, file_name)
+    processes["commander"], _ = start_commander(axis, amplitude, 0.8, file_name)
 
 
     #Wait
@@ -209,7 +209,7 @@ def one_run(axis, amplitude, file_name):
 
 
     #Recover data
-    export_run(axis, file_name, amplitude, 0.7)
+    export_run(axis, file_name, amplitude, 0.8)
 
 def test_sweep(search_runs:int, search_axis:list[str], max_amplitude: float, min_amplitude :float|None = None):
     if min_amplitude is None:
