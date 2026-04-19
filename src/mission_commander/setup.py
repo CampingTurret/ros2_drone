@@ -28,7 +28,7 @@ setup(
             'gate_passing = mission_commander.gate_passing:main',
             'path_following = mission_commander.path_following:main',
             'whiteboard_drawing = mission_commander.whiteboard_drawing:main',
-            'attitude_step_takeoff = mission_commander.Attitude_step:main'
+            'attitude_step_takeoff = mission_commander.Attitude_step:main',
             'attitude_step = mission_commander.Attitude_only_step:main'
         ],
     },

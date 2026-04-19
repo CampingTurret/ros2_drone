@@ -152,9 +152,24 @@ class MinimalStepInput(Node):
 
         return roll, pitch, yaw
 
-    # ------------------------------------------------------------
-    # Helper: send attitude + thrust setpoint
-    # ------------------------------------------------------------
+    def euler_to_quaternion(self, roll, pitch, yaw):
+        """
+        Convert Euler angles (rad) to quaternion (w, x, y, z)
+        using the PX4 rotation convention (Z-Y-X).
+        """
+        cr = np.cos(roll * 0.5)
+        sr = np.sin(roll * 0.5)
+        cp = np.cos(pitch * 0.5)
+        sp = np.sin(pitch * 0.5)
+        cy = np.cos(yaw * 0.5)
+        sy = np.sin(yaw * 0.5)
+
+        w = cy * cp * cr + sy * sp * sr
+        x = cy * cp * sr - sy * sp * cr
+        y = sy * cp * sr + cy * sp * cr
+        z = sy * cp * cr - cy * sp * sr
+
+        return w, x, y, z
     def send_attitude_setpoint(self, roll, pitch, yaw_rate, thrust):
         msg = VehicleAttitudeSetpoint()
         msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
@@ -165,6 +180,9 @@ class MinimalStepInput(Node):
         msg.yaw_body = float('nan')
         msg.yaw_sp_move_rate = yaw_rate
 
+        qw, qx, qy, qz = self.euler_to_quaternion(roll, pitch, 0.0)
+        msg.q_d = [qw, qx, qy, qz]
+
         # Thrust in body NED frame (down is positive)
         msg.thrust_body = [0.0, 0.0, -float(thrust)]
 
@@ -174,7 +192,8 @@ class MinimalStepInput(Node):
         self.last_thrust_cmd = thrust
 
         self.attitude_pub.publish(msg)
-        
+
+
     # ------------------------------------------------------------
     # Helper: offboard heartbeat
     # ------------------------------------------------------------
