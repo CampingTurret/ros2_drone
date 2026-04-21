@@ -73,10 +73,10 @@ def build_docker():
 
 def start_commander_container():
     # Build docker run command
-    subprocess.run(["sudo", "docker", "rm", "-f", "ros_imav_container"])
+    subprocess.run(["docker", "rm", "-f", "ros_imav_container"])
 
     cmd = [
-        "sudo", "docker", "run", "-dit",
+        "docker", "run", "-dit",
         "--name", "ros_imav_container",
         "--network=host",
         "--privileged",
@@ -106,7 +106,7 @@ def start_commander(axis, amplitude, hover_thrust, filename):
     )
     
     ros2_cmd = [
-        "sudo", "docker", "exec", "-it", container_id,
+        "docker", "exec", "-it", container_id,
         "bash", "-i", "-c", cmd_str
     ]
 
@@ -198,7 +198,7 @@ def clear_runs(axis: str):
 def one_run(axis, amplitude, file_name):
 
     #Preperation
-    ensure_sudo()
+    #ensure_sudo()
     repo_pull()
     build_docker()
     
@@ -223,7 +223,7 @@ def one_run(axis, amplitude, file_name):
     #processes["uxrce"].terminate()
     #processes["uxrce"].wait(timeout=5)
     #processes["commander"].kill()
-    subprocess.run(["sudo", "docker", "stop", "ros_imav_container"])
+    subprocess.run(["docker", "stop", "ros_imav_container"])
 
 
     #Recover data
@@ -252,15 +252,11 @@ def keep_sudo_alive():
         subprocess.run(["sudo", "-v"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         time.sleep(60)  # refresh every minute
 
-# Start refresher thread
-threading.Thread(target=keep_sudo_alive, daemon=True).start()
-
-
 
 if __name__ == "__main__":
     print("Starting")
-    ensure_sudo()
-    threading.Thread(target=keep_sudo_alive, daemon=True).start()
+    #ensure_sudo()
+    #threading.Thread(target=keep_sudo_alive, daemon=True).start()
     one_run("roll", 10, "test")
     one_run("roll", 10, "test2")
     one_run("roll", 10, "test3")
