@@ -245,10 +245,22 @@ def ensure_sudo():
     print("Requesting sudo password...")
     subprocess.run(["sudo", "-v"])  # triggers password prompt early
 
+import subprocess, threading, time
+
+def keep_sudo_alive():
+    while True:
+        subprocess.run(["sudo", "-v"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        time.sleep(60)  # refresh every minute
+
+# Start refresher thread
+threading.Thread(target=keep_sudo_alive, daemon=True).start()
+
+
 
 if __name__ == "__main__":
     print("Starting")
     ensure_sudo()
+    threading.Thread(target=keep_sudo_alive, daemon=True).start()
     one_run("roll", 10, "test")
     one_run("roll", 10, "test2")
     one_run("roll", 10, "test3")
