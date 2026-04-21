@@ -20,7 +20,7 @@ def start_px4():
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL
     )
-    time.sleep(2)
+    time.sleep(5)
     return p
 
 def start_uxrcedss():
@@ -32,7 +32,7 @@ def start_uxrcedss():
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
-    time.sleep(2)
+    time.sleep(5)
     return p
 
 def repo_pull():
@@ -202,8 +202,10 @@ def one_run(axis, amplitude, file_name):
     time.sleep(120)
 
     #End processes
-    processes["px4"].kill()
-    processes["uxrce"].kill()
+    processes["px4"].terminate()
+    processes["px4"].wait(timeout=5)
+    processes["uxrce"].terminate()
+    processes["uxrce"].wait(timeout=5)
     processes["commander"].kill()
     subprocess.run(["sudo", "docker", "stop", "ros_imav_container"])
 
@@ -232,4 +234,8 @@ if __name__ == "__main__":
     print("Starting")
     ensure_sudo()
     one_run("roll", 10, "test")
+    one_run("roll", 10, "test2")
+    one_run("roll", 10, "test3")
+    one_run("roll", 10, "test4")
+    one_run("roll", 10, "test5")
     compile_runs("roll")
