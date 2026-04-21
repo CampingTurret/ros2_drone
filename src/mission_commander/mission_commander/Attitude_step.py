@@ -91,9 +91,9 @@ class MinimalStepInput(Node):
 
         # Remove only CSV files
         for f in glob.glob(os.path.join(log_dir, "*.csv")):
+            print(f"Removed {f}")
             os.remove(f)
 
-        # Now create your new log file
         self.logfile = open(f"{log_dir}/{run_name}.csv", "w", newline="")
         self.logger = csv.writer(self.logfile)
 
