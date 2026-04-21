@@ -6,6 +6,7 @@ import json
 import shutil
 import pandas as pd
 import json
+import os, signal
 
 PATH_microxrcedds = Path(__file__).parents[1] / "Micro-XRCE-DDS-Agent"
 PATH_PX4 = Path(__file__).parents[1] / "PX4-Autopilot"
@@ -31,9 +32,18 @@ def start_uxrcedss():
         cwd=PATH_microxrcedds,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
+        preexec_fn=os.setsid
     )
     time.sleep(5)
     return p
+
+def kill_process_tree(p):
+    try:
+        os.killpg(os.getpgid(p.pid), signal.SIGTERM)
+        p.wait(timeout=5)
+    except Exception:
+        os.killpg(os.getpgid(p.pid), signal.SIGKILL)
+
 
 def repo_pull():
     # Command: git pull in PATH_Commander
@@ -201,12 +211,17 @@ def one_run(axis, amplitude, file_name):
     #Wait
     time.sleep(120)
 
+
+    kill_process_tree(processes["px4"])
+    kill_process_tree(processes["uxrce"])
+    kill_process_tree(processes["commander"])
+
     #End processes
-    processes["px4"].terminate()
-    processes["px4"].wait(timeout=5)
-    processes["uxrce"].terminate()
-    processes["uxrce"].wait(timeout=5)
-    processes["commander"].kill()
+    #processes["px4"].terminate()
+    #processes["px4"].wait(timeout=5)
+    #processes["uxrce"].terminate()
+    #processes["uxrce"].wait(timeout=5)
+    #processes["commander"].kill()
     subprocess.run(["sudo", "docker", "stop", "ros_imav_container"])
 
 
