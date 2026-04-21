@@ -19,7 +19,8 @@ def start_px4():
         ["make", "px4_sitl", "gz_x500"],
         cwd=PATH_PX4,
         stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL
+        stderr=subprocess.DEVNULL,
+        preexec_fn=os.setsid
     )
     time.sleep(5)
     return p
@@ -109,7 +110,7 @@ def start_commander(axis, amplitude, hover_thrust, filename):
         "bash", "-i", "-c", cmd_str
     ]
 
-    return subprocess.Popen(ros2_cmd), container_id
+    return subprocess.Popen(ros2_cmd, preexec_fn=os.setsid), container_id
 
 import shutil
 import json
