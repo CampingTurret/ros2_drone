@@ -261,7 +261,7 @@ if __name__ == "__main__":
     base_name = "x500"
     axis = "roll"
     run_length = 20
-    clear_runs(base_name)
+    clear_runs(axis)
     for i in range(run_length):
         one_run(axis, 10, f"{base_name}_{i}")
     compile_runs(axis)
