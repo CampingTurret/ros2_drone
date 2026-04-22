@@ -257,9 +257,11 @@ if __name__ == "__main__":
     print("Starting")
     #ensure_sudo()
     #threading.Thread(target=keep_sudo_alive, daemon=True).start()
-    one_run("roll", 10, "test")
-    one_run("roll", 10, "test2")
-    one_run("roll", 10, "test3")
-    one_run("roll", 10, "test4")
-    one_run("roll", 10, "test5")
-    compile_runs("roll")
+
+    base_name = "x500"
+    axis = "roll"
+    run_length = 20
+    clear_runs(base_name)
+    for i in range(run_length):
+        one_run(axis, 10, f"{base_name}_{i}")
+    compile_runs(axis)
