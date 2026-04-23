@@ -21,7 +21,8 @@ from px4_msgs.msg import (
     VehicleLocalPosition,
     VehicleStatus,
     VehicleCommandAck,
-    ActuatorMotors
+    ActuatorMotors,
+    VehicleAngularVelocity
 )
 
 class MinimalStepInput(Node):
@@ -50,6 +51,9 @@ class MinimalStepInput(Node):
         # --- Subscribers ---
         self.local_pos = VehicleLocalPosition()
         self.create_subscription(VehicleLocalPosition, '/fmu/out/vehicle_local_position', self.position_callback, qos_profile)
+
+        self.local_ang = VehicleAngularVelocity()
+        self.create_subscription(VehicleAngularVelocity, '/fmu/out/vehicle_angular_velocity', self.angular_callback, qos_profile)
         
 
         self.motors_sub = ActuatorMotors()
@@ -101,6 +105,7 @@ class MinimalStepInput(Node):
             "t",
             "roll_cmd", "pitch_cmd", "yaw_rate_cmd", "thrust_cmd",
             "roll_gt", "pitch_gt", "yaw_gt",
+            "rolld_gt", "pitchd_gt", "yawd_gt"
             "x_gt", "y_gt", "z_gt",
             "vx_gt", "vy_gt", "vz_gt",
             "ax_gt", "ay_gt", "az_gt",
@@ -113,8 +118,8 @@ class MinimalStepInput(Node):
         self.start_time = time.time()
         self.hover_record = []
 
-        # Timer @ 33 Hz
-        self.timer = self.create_timer(0.03, self.loop)
+        # Timer @ 30 Hz
+        self.timer = self.create_timer(0.0333, self.loop)
 
 
         self.last_roll_cmd = np.nan
@@ -122,7 +127,8 @@ class MinimalStepInput(Node):
         self.last_yaw_rate_cmd = np.nan
         self.last_thrust_cmd = np.nan
 
-
+    def angular_callback(self, msg):
+        self.local_ang = msg
 
     def position_callback(self, msg):
         self.local_pos = msg
@@ -318,6 +324,11 @@ class MinimalStepInput(Node):
         # Ground truth attitude
         roll_gt, pitch_gt, yaw_gt = self.quat_to_euler(self.att_gt.q)
 
+        rolld_gt = self.local_ang.xyz[0]
+        pitchd_gt = self.local_ang.xyz[1]
+        yawd_gt = self.local_ang.xyz[2]
+
+
         # Ground truth position/velocity/acc
         x_gt = self.pos_gt.x
         y_gt = self.pos_gt.y
@@ -335,6 +346,7 @@ class MinimalStepInput(Node):
             t,
             roll_cmd, pitch_cmd, yaw_rate_cmd, thrust_cmd,
             roll_gt, pitch_gt, yaw_gt,
+            rolld_gt, pitchd_gt, yawd_gt,
             x_gt, y_gt, z_gt,
             vx_gt, vy_gt, vz_gt,
             ax_gt, ay_gt, az_gt,
