@@ -102,7 +102,7 @@ class MinimalStepInput(Node):
             "t",
             "roll_cmd", "pitch_cmd", "yaw_rate_cmd", "thrust_cmd",
             "roll_gt", "pitch_gt", "yaw_gt",
-            "rolld_gt", "pitchd_gt", "yawd_gt"
+            "rolld_gt", "pitchd_gt", "yawd_gt",
             "x_gt", "y_gt", "z_gt",
             "vx_gt", "vy_gt", "vz_gt",
             "ax_gt", "ay_gt", "az_gt",
