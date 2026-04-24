@@ -187,8 +187,8 @@ class MinimalStepInput(Node):
         msg.yaw_body = float('nan')
         msg.yaw_sp_move_rate = yaw_rate
 
-        qw, qx, qy, qz = self.euler_to_quaternion(roll, pitch, 0.0)
-        msg.q_d = [qw, qx, qy, qz]
+        #qw, qx, qy, qz = self.euler_to_quaternion(roll, pitch, 0.0)
+        #msg.q_d = [qw, qx, qy, qz]
 
         # Thrust in body NED frame (down is positive)
         msg.thrust_body = [0.0, 0.0, -float(thrust)]
