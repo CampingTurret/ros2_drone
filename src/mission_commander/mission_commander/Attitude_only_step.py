@@ -178,6 +178,10 @@ class MinimalStepInput(Node):
         z = sy * cp * cr - cy * sp * sr
 
         return w, x, y, z
+    
+    def wrap_pi(self, angle):
+        return (angle + np.pi) % (2 * np.pi) - np.pi
+    
     def send_attitude_setpoint(self, roll, pitch, yaw_rate, thrust):
         msg = VehicleAttitudeSetpoint()
         msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
