@@ -183,6 +183,11 @@ class MinimalStepInput(Node):
         z = sy * cp * cr - cy * sp * sr
 
         return w, x, y, z
+    
+    def wrap_pi(self, angle):
+        return (angle + np.pi) % (2 * np.pi) - np.pi
+
+
     def send_attitude_setpoint(self, roll, pitch, yaw_rate, thrust):
         msg = VehicleAttitudeSetpoint()
         msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
@@ -193,7 +198,7 @@ class MinimalStepInput(Node):
         msg.yaw_body = float('nan')
         msg.yaw_sp_move_rate = yaw_rate
 
-        yaw_cmd = self.last_yaw_cmd + yaw_rate * 0.0333
+        yaw_cmd = self.wrap_pi(self.last_yaw_cmd + yaw_rate * 0.0333)
         qw, qx, qy, qz = self.euler_to_quaternion(roll, pitch, yaw_cmd)
         msg.q_d = [qw, qx, qy, qz]
 
@@ -202,7 +207,7 @@ class MinimalStepInput(Node):
 
         self.last_roll_cmd = roll
         self.last_pitch_cmd = pitch
-        self.last_yaw_cmd += yaw_rate * 0.0333
+        self.last_yaw_cmd = yaw_cmd
         self.last_yaw_rate_cmd = yaw_rate
         self.last_thrust_cmd = thrust
 
