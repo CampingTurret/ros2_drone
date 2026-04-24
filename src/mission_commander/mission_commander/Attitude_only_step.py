@@ -122,6 +122,7 @@ class MinimalStepInput(Node):
 
         self.last_roll_cmd = np.nan
         self.last_pitch_cmd = np.nan
+        self.last_yaw_cmd = 0.0
         self.last_yaw_rate_cmd = np.nan
         self.last_thrust_cmd = np.nan
 
@@ -187,14 +188,16 @@ class MinimalStepInput(Node):
         msg.yaw_body = float('nan')
         msg.yaw_sp_move_rate = yaw_rate
 
-        #qw, qx, qy, qz = self.euler_to_quaternion(roll, pitch, 0.0)
-        #msg.q_d = [qw, qx, qy, qz]
+        yaw_cmd = self.last_yaw_cmd + yaw_rate * 0.0333
+        qw, qx, qy, qz = self.euler_to_quaternion(roll, pitch, yaw_cmd)
+        msg.q_d = [qw, qx, qy, qz]
 
         # Thrust in body NED frame (down is positive)
         msg.thrust_body = [0.0, 0.0, -float(thrust)]
 
         self.last_roll_cmd = roll
         self.last_pitch_cmd = pitch
+        self.last_yaw_cmd += yaw_rate * 0.0333
         self.last_yaw_rate_cmd = yaw_rate
         self.last_thrust_cmd = thrust
 

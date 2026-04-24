@@ -126,6 +126,7 @@ class MinimalStepInput(Node):
         self.last_pitch_cmd = np.nan
         self.last_yaw_rate_cmd = np.nan
         self.last_thrust_cmd = np.nan
+        self.last_yaw_cmd = 0.0
 
     def angular_callback(self, msg):
         self.local_ang = msg
@@ -192,7 +193,8 @@ class MinimalStepInput(Node):
         msg.yaw_body = float('nan')
         msg.yaw_sp_move_rate = yaw_rate
 
-        qw, qx, qy, qz = self.euler_to_quaternion(roll, pitch, 0.0)
+        yaw_cmd = self.last_yaw_cmd + yaw_rate * 0.0333
+        qw, qx, qy, qz = self.euler_to_quaternion(roll, pitch, yaw_cmd)
         msg.q_d = [qw, qx, qy, qz]
 
         # Thrust in body NED frame (down is positive)
@@ -200,11 +202,11 @@ class MinimalStepInput(Node):
 
         self.last_roll_cmd = roll
         self.last_pitch_cmd = pitch
+        self.last_yaw_cmd += yaw_rate * 0.0333
         self.last_yaw_rate_cmd = yaw_rate
         self.last_thrust_cmd = thrust
 
         self.attitude_pub.publish(msg)
-
     def publish_position_setpoint(self, x: float, y: float, z: float, yaw: float):
         msg = TrajectorySetpoint()
         msg.position = [x, y, z]
