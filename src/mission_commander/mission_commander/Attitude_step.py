@@ -277,6 +277,9 @@ class MinimalStepInput(Node):
                     print("Armed in OFFBOARD")
                     self.start_time = time.time()
                     self.stage = 1
+                    if self.step_axis == "IMU":
+                        self.command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1.0, 4.0)  # AUTO
+                        self.command(VehicleCommand.VEHICLE_CMD_NAV_LAND)
 
         elif self.stage == 1:
             self.publish_position_setpoint(0.0, 0.0, -5.0, 0.0)
@@ -300,6 +303,10 @@ class MinimalStepInput(Node):
                 self.send_attitude_setpoint(0.0, np.deg2rad(self.step_amplitude), 0.0, self.hover_thrust)
             elif self.step_axis == "yaw_rate":
                 self.send_attitude_setpoint(0.0, 0.0, np.deg2rad(self.step_amplitude), self.hover_thrust)
+            elif self.step_axis == "thrust":
+                self.send_attitude_setpoint(0.0, 0.0, np.deg2rad(self.step_amplitude), self.hover_thrust)
+            elif self.step_axis == "IMU":
+                self.send_attitude_setpoint(0.0, 0.0, 0.0, 0.0)
 
             if time.time() - self.start_time > 10.0:
                 self.start_time = time.time()
