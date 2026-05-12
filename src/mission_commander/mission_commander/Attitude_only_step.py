@@ -106,7 +106,7 @@ class MinimalStepInput(Node):
             "x_gt", "y_gt", "z_gt",
             "vx_gt", "vy_gt", "vz_gt",
             "ax_gt", "ay_gt", "az_gt",
-            "stage"
+            "stage", "yaw_cmd"
         ])
 
 
@@ -338,7 +338,7 @@ class MinimalStepInput(Node):
             x_gt, y_gt, z_gt,
             vx_gt, vy_gt, vz_gt,
             ax_gt, ay_gt, az_gt,
-            self.stage
+            self.stage, self.last_yaw_cmd
         ])
 
 
