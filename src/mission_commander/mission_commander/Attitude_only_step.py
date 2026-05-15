@@ -117,7 +117,8 @@ class MinimalStepInput(Node):
         self.hover_record = []
 
         # Timer @ 30 Hz
-        self.timer = self.create_timer(0.0333, self.loop)
+        dt = 1/30
+        self.timer = self.create_timer(dt, self.loop)
 
 
         self.last_roll_cmd = np.nan
@@ -125,6 +126,33 @@ class MinimalStepInput(Node):
         self.last_yaw_cmd = 0.0
         self.last_yaw_rate_cmd = np.nan
         self.last_thrust_cmd = np.nan
+
+
+        #Signal setup
+        # Format: (duration_in_seconds, amplitude_in_degrees)
+        self.Signal_sections = [
+            (1.0,  step_amplitude*1.0),
+            (0.5, -step_amplitude*1.0),
+            (1.0,  step_amplitude*0.0),
+            (1.5,  step_amplitude*0.5),
+            (0.7, -step_amplitude*0.1),
+            (1.2, -step_amplitude*0.3),
+            (0.3, -step_amplitude*0.6),
+            (0.4,  step_amplitude*0.2),
+            (1.4,  -step_amplitude*0.3),
+            (2.4,  step_amplitude*0.6),
+        ]
+        self.Signal_dt = dt
+        self.Signal_values = []
+
+        for duration, amp_deg in self.Signal_sections:
+            n = int(duration / self.Signal_dt)
+            amp_rad = np.deg2rad(amp_deg)
+            self.Signal_values.extend([amp_rad] * n)
+
+        self.Signal_length = len(self.Signal_values)
+        self.Signal_duration = self.Signal_length * self.Signal_dt
+
 
     def angular_callback(self, msg):
         self.local_ang = msg
@@ -273,18 +301,36 @@ class MinimalStepInput(Node):
 
         # --- Stage 2: apply step input ---
         elif self.stage == 2:
-            if self.step_axis == "roll":
-                self.send_attitude_setpoint(np.deg2rad(self.step_amplitude), 0.0, 0.0, self.hover_thrust)
-            elif self.step_axis == "pitch":
-                self.send_attitude_setpoint(0.0, np.deg2rad(self.step_amplitude), 0.0, self.hover_thrust)
-            elif self.step_axis == "yaw_rate":
-                self.send_attitude_setpoint(0.0, 0.0, np.deg2rad(self.step_amplitude), self.hover_thrust)
-            elif self.step_axis == "IMU":
+            t = time.time() - self.start_time
+            idx = int(t / self.Signal_dt)
+
+            if self.step_axis == "IMU":
                 self.send_attitude_setpoint(0.0, 0.0, 0.0, 0.0)
 
-            if time.time() - self.start_time > 10.0:
-                self.start_time = time.time()
-                self.stage = 3
+                if t > 10.0:
+                    self.start_time = time.time()
+                    self.stage = 3
+
+            # --- Signal MODE ---
+            else:
+                if idx < self.Signal_length:
+                    u = self.Signal_values[idx]
+                else:
+                    u = 0.0
+
+                if self.step_axis == "roll":
+                    self.send_attitude_setpoint(u, 0.0, 0.0, self.hover_thrust)
+
+                elif self.step_axis == "pitch":
+                    self.send_attitude_setpoint(0.0, u, 0.0, self.hover_thrust)
+
+                elif self.step_axis == "yaw_rate":
+                    self.send_attitude_setpoint(0.0, 0.0, u, self.hover_thrust)
+
+                # Signal mode ends when sequence ends
+                if idx >= self.Signal_length:
+                    self.start_time = time.time()
+                    self.stage = 3
 
         # --- Stage 3: land ---
         elif self.stage == 3:
